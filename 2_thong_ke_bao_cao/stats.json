@@ -1,0 +1,274 @@
+{
+  "generated_at": "2026-10-23",
+  "per_source": {
+    "dantri": {
+      "sitemap_urls_2022_now": 364759,
+      "slug_candidates": 18942,
+      "attempted": 398,
+      "downloaded": 380,
+      "rejected": {
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 10,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 15,
+        "không liên quan: không đủ nội dung lao động": 38,
+        "thiếu ngày xuất bản": 4,
+        "không liên quan: chuyên mục thể thao/giải trí": 7,
+        "nội dung quá ngắn/không truy cập được toàn văn": 2,
+        "không tải được": 18
+      },
+      "valid": 301,
+      "borderline": 1
+    },
+    "tuoitre": {
+      "sitemap_urls_2022_now": 318600,
+      "slug_candidates": 13996,
+      "attempted": 3000,
+      "downloaded": 3000,
+      "rejected": {
+        "không liên quan: không đủ nội dung lao động": 498,
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 383,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 254,
+        "thiếu ngày xuất bản": 1,
+        "nội dung quá ngắn/không truy cập được toàn văn": 16,
+        "không liên quan: nội dung quảng cáo/tài trợ": 1
+      },
+      "valid": 1805,
+      "borderline": 19
+    },
+    "thanhnien": {
+      "sitemap_urls_2022_now": 487318,
+      "slug_candidates": 17347,
+      "attempted": 3000,
+      "downloaded": 3000,
+      "rejected": {
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 173,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 165,
+        "không liên quan: không đủ nội dung lao động": 533,
+        "nội dung quá ngắn/không truy cập được toàn văn": 74,
+        "không liên quan: nội dung quảng cáo/tài trợ": 2
+      },
+      "valid": 2010,
+      "borderline": 25
+    },
+    "vietnamnet": {
+      "sitemap_urls_2022_now": 378025,
+      "slug_candidates": 13453,
+      "attempted": 2999,
+      "downloaded": 2999,
+      "rejected": {
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 93,
+        "không liên quan: không đủ nội dung lao động": 540,
+        "nội dung quá ngắn/không truy cập được toàn văn": 157,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 194,
+        "không liên quan: nội dung quảng cáo/tài trợ": 1,
+        "thiếu ngày xuất bản": 1
+      },
+      "valid": 1949,
+      "borderline": 38
+    },
+    "tienphong": {
+      "sitemap_urls_2022_now": 48039,
+      "slug_candidates": 2100,
+      "attempted": 2100,
+      "downloaded": 2100,
+      "rejected": {
+        "không liên quan: không đủ nội dung lao động": 874,
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 65,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 95,
+        "nội dung quá ngắn/không truy cập được toàn văn": 119,
+        "không liên quan: nội dung quảng cáo/tài trợ": 1
+      },
+      "valid": 875,
+      "borderline": 62
+    },
+    "vneconomy": {
+      "sitemap_urls_2022_now": 96053,
+      "slug_candidates": 6601,
+      "attempted": 3000,
+      "downloaded": 3000,
+      "rejected": {
+        "không liên quan: nội dung quảng cáo/tài trợ": 2,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 213,
+        "không liên quan: không đủ nội dung lao động": 224,
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 28,
+        "nội dung quá ngắn/không truy cập được toàn văn": 2
+      },
+      "valid": 2477,
+      "borderline": 38
+    },
+    "nhandan": {
+      "sitemap_urls_2022_now": 69404,
+      "slug_candidates": 3164,
+      "attempted": 3000,
+      "downloaded": 3000,
+      "rejected": {
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 77,
+        "không liên quan: không đủ nội dung lao động": 937,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 106,
+        "nội dung quá ngắn/không truy cập được toàn văn": 119,
+        "thiếu ngày xuất bản": 6,
+        "không liên quan: nội dung quảng cáo/tài trợ": 3
+      },
+      "valid": 1645,
+      "borderline": 88
+    },
+    "sggp": {
+      "sitemap_urls_2022_now": 217748,
+      "slug_candidates": 7821,
+      "attempted": 3000,
+      "downloaded": 2999,
+      "rejected": {
+        "không liên quan: không đủ nội dung lao động": 726,
+        "nội dung quá ngắn/không truy cập được toàn văn": 28,
+        "không trích xuất được thân bài": 162,
+        "không liên quan: tiêu đề tuyển dụng/quảng cáo/thể thao": 187,
+        "không liên quan: tin quốc tế, không liên hệ người lao động Việt Nam": 116,
+        "không tải được": 1,
+        "không liên quan: nội dung quảng cáo/tài trợ": 1
+      },
+      "valid": 1722,
+      "borderline": 33
+    }
+  },
+  "fetch_attempts": 20498,
+  "unique_urls_attempted": 20497,
+  "dedup": {
+    "before": 13225,
+    "after": 13088,
+    "removed": 137,
+    "removed_by_title": 65,
+    "removed_by_content": 72
+  },
+  "valid_total": 12784,
+  "borderline_total": 304,
+  "rejected_total": 7272,
+  "by_year": {
+    "2022": 2340,
+    "2023": 2886,
+    "2024": 2987,
+    "2025": 2562,
+    "2026": 2009
+  },
+  "by_source_year": {
+    "Dân Trí": {
+      "2022": 57,
+      "2023": 68,
+      "2024": 57,
+      "2025": 74,
+      "2026": 45
+    },
+    "Nhân Dân": {
+      "2022": 326,
+      "2023": 337,
+      "2024": 550,
+      "2025": 198,
+      "2026": 234
+    },
+    "Sài Gòn Giải Phóng": {
+      "2022": 301,
+      "2023": 375,
+      "2024": 373,
+      "2025": 373,
+      "2026": 300
+    },
+    "Thanh Niên": {
+      "2022": 402,
+      "2023": 516,
+      "2024": 417,
+      "2025": 390,
+      "2026": 285
+    },
+    "Tiền Phong": {
+      "2022": 193,
+      "2023": 216,
+      "2024": 186,
+      "2025": 164,
+      "2026": 116
+    },
+    "Tuổi Trẻ": {
+      "2022": 285,
+      "2023": 339,
+      "2024": 383,
+      "2025": 443,
+      "2026": 355
+    },
+    "VietNamNet": {
+      "2022": 384,
+      "2023": 457,
+      "2024": 469,
+      "2025": 397,
+      "2026": 242
+    },
+    "VnEconomy": {
+      "2022": 392,
+      "2023": 578,
+      "2024": 552,
+      "2025": 523,
+      "2026": 432
+    }
+  },
+  "by_topic": {
+    "C - Tiền lương, bảo hiểm, quyền lợi": 4321,
+    "A - Thị trường lao động Việt Nam": 1999,
+    "F - Công đoàn, đình công, tranh chấp lao động": 1617,
+    "G - Nhóm lao động dễ bị ảnh hưởng": 1305,
+    "D - Hợp đồng lao động, nghỉ việc, sa thải": 1021,
+    "H - Chính sách việc làm, đào tạo nghề, an sinh xã hội": 895,
+    "B - Thất nghiệp, mất việc, cắt giảm nhân sự": 506,
+    "E - Điều kiện làm việc, an toàn lao động": 421,
+    "I - Lừa đảo tuyển dụng, bóc lột lao động": 325,
+    "K - Pháp luật lao động và thực thi": 248,
+    "J - Kinh tế và yếu tố tác động đến việc làm": 81,
+    "L - Tâm lý người lao động, chất lượng việc làm": 45
+  },
+  "by_location_top20": {
+    "Toàn quốc/không xác định": 6200,
+    "TP.HCM": 2341,
+    "Hà Nội": 1441,
+    "Đà Nẵng": 329,
+    "Bình Dương": 293,
+    "Đồng Nai": 254,
+    "Nghệ An": 187,
+    "Thanh Hóa": 176,
+    "Hải Phòng": 166,
+    "Bắc Ninh": 138,
+    "Quảng Ninh": 122,
+    "Bắc Giang": 117,
+    "Quảng Nam": 108,
+    "Cần Thơ": 106,
+    "Hà Tĩnh": 100,
+    "Thái Bình": 94,
+    "Huế": 88,
+    "Cà Mau": 86,
+    "Quảng Ngãi": 80,
+    "Long An": 73
+  },
+  "missing_rate": {
+    "article_id": 0.0,
+    "title": 0.0,
+    "content": 0.0,
+    "publish_date": 0.0,
+    "source_name": 0.0,
+    "source_url": 0.0,
+    "topic_primary": 0.0,
+    "topic_secondary": 0.4495,
+    "matched_keywords": 0.0,
+    "location": 0.0,
+    "sentiment": 1.0,
+    "relevance_status": 0.0,
+    "collection_date": 0.0,
+    "data_quality_note": 0.0,
+    "relevance_score": 0.0,
+    "word_count": 0.0
+  },
+  "required_fields_complete": true,
+  "content_chars": {
+    "count": 12784.0,
+    "mean": 3650.0,
+    "std": 2006.0,
+    "min": 310.0,
+    "25%": 2270.0,
+    "50%": 3405.0,
+    "75%": 4614.0,
+    "max": 61342.0
+  }
+}
