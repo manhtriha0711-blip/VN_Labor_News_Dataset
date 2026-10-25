@@ -1,0 +1,2 @@
+﻿issue_code,severity,count,examples_article_ids,description
+WORD_COUNT_DIFFERS_FROM_CONTENT_SPLIT,Info,1,,"11953/12784 rows differ; comparison only, original values are preserved."

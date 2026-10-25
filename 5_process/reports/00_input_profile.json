@@ -1,0 +1,99 @@
+{
+  "generated_at_utc": "2026-10-25T22:33:25.956480+00:00",
+  "python_version": "3.11.9",
+  "pandas_version": "3.0.2",
+  "input_file": "1_du_lieu_chinh\\vn_labor_news_dataset.csv",
+  "sha256": "9ed13a4758ba6aecb2c6673c9d107f19739a25b1bea364bfa86bd33b23581c96",
+  "rows": 12784,
+  "columns_count": 16,
+  "columns": [
+    "article_id",
+    "title",
+    "content",
+    "publish_date",
+    "source_name",
+    "source_url",
+    "topic_primary",
+    "topic_secondary",
+    "matched_keywords",
+    "location",
+    "sentiment",
+    "relevance_status",
+    "collection_date",
+    "data_quality_note",
+    "relevance_score",
+    "word_count"
+  ],
+  "blank_counts": {
+    "article_id": 0,
+    "title": 0,
+    "content": 0,
+    "publish_date": 0,
+    "source_name": 0,
+    "source_url": 0,
+    "topic_primary": 0,
+    "topic_secondary": 5746,
+    "matched_keywords": 0,
+    "location": 0,
+    "sentiment": 12784,
+    "relevance_status": 0,
+    "collection_date": 0,
+    "data_quality_note": 0,
+    "relevance_score": 0,
+    "word_count": 0
+  },
+  "unique_counts": {
+    "article_id": 12784,
+    "source_url": 12784
+  },
+  "publish_date": {
+    "valid": 12784,
+    "invalid": 0,
+    "min": "2022-01-01",
+    "max": "2026-10-23"
+  },
+  "publish_year_counts": {
+    "2022": 2340,
+    "2023": 2886,
+    "2024": 2987,
+    "2025": 2562,
+    "2026": 2009
+  },
+  "source_name_counts": {
+    "Dân Trí": 301,
+    "Nhân Dân": 1645,
+    "Sài Gòn Giải Phóng": 1722,
+    "Thanh Niên": 2010,
+    "Tiền Phong": 875,
+    "Tuổi Trẻ": 1805,
+    "VietNamNet": 1949,
+    "VnEconomy": 2477
+  },
+  "topic_primary_counts": {
+    "A - Thị trường lao động Việt Nam": 1999,
+    "B - Thất nghiệp, mất việc, cắt giảm nhân sự": 506,
+    "C - Tiền lương, bảo hiểm, quyền lợi": 4321,
+    "D - Hợp đồng lao động, nghỉ việc, sa thải": 1021,
+    "E - Điều kiện làm việc, an toàn lao động": 421,
+    "F - Công đoàn, đình công, tranh chấp lao động": 1617,
+    "G - Nhóm lao động dễ bị ảnh hưởng": 1305,
+    "H - Chính sách việc làm, đào tạo nghề, an sinh xã hội": 895,
+    "I - Lừa đảo tuyển dụng, bóc lột lao động": 325,
+    "J - Kinh tế và yếu tố tác động đến việc làm": 81,
+    "K - Pháp luật lao động và thực thi": 248,
+    "L - Tâm lý người lao động, chất lượng việc làm": 45
+  },
+  "relevance_status_counts": {
+    "relevant_auto": 12784
+  },
+  "content_characters": {
+    "min": 310,
+    "median": 3405.0,
+    "max": 61342
+  },
+  "word_count_comparison": {
+    "mismatches_vs_content_split": 11953,
+    "rows": 12784,
+    "note": "Comparison only; does not overwrite the Collecting word_count field."
+  }
+}

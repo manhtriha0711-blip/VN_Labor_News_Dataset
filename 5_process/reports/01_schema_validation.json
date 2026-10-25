@@ -1,0 +1,58 @@
+{
+  "rows": 12784,
+  "columns": [
+    "article_id",
+    "title",
+    "content",
+    "publish_date",
+    "source_name",
+    "source_url",
+    "topic_primary",
+    "topic_secondary",
+    "matched_keywords",
+    "location",
+    "sentiment",
+    "relevance_status",
+    "collection_date",
+    "data_quality_note",
+    "relevance_score",
+    "word_count"
+  ],
+  "expected_columns": [
+    "article_id",
+    "title",
+    "content",
+    "publish_date",
+    "source_name",
+    "source_url",
+    "topic_primary",
+    "topic_secondary",
+    "matched_keywords",
+    "location",
+    "sentiment",
+    "relevance_status",
+    "collection_date",
+    "data_quality_note",
+    "relevance_score",
+    "word_count"
+  ],
+  "required_columns": [
+    "article_id",
+    "title",
+    "content",
+    "publish_date",
+    "source_name",
+    "source_url",
+    "topic_primary",
+    "relevance_status"
+  ],
+  "accepted_missing_values": {
+    "topic_secondary": 5746,
+    "sentiment": 12784
+  },
+  "issue_counts": {
+    "WORD_COUNT_DIFFERS_FROM_CONTENT_SPLIT": 1
+  },
+  "critical_or_high_issues": 0,
+  "status": "PASS"
+}
