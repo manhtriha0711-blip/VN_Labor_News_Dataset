@@ -1,5 +1,6 @@
 """Unit test cho 03_clean_metadata.py (Người 2). Chạy: python -m unittest 5_process/tests/test_clean_metadata.py"""
 import importlib.util
+import tempfile
 import sys
 import unittest
 from pathlib import Path
@@ -50,6 +51,49 @@ class TestNormalize(unittest.TestCase):
         self.assertEqual(cm.parse_topic("C - nhãn lạ"), ("C", False))
         self.assertEqual(cm.parse_topic("Z - x"), (None, False))
 
+    def test_ai_draft_duplicate_decisions_cannot_be_loaded(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "duplicate_decisions.csv"
+            pd.DataFrame([{
+                "review_key": "title_key|a; b",
+                "decision": "KHONG_TRUNG",
+                "keep_article_id": "",
+                "reviewer": "Claude (bản nháp) - chờ Người 2 xác nhận",
+                "review_note": "AI draft",
+            }]).to_csv(path, index=False)
+
+            with self.assertRaisesRegex(ValueError, "AI/draft reviewer"):
+                cm.load_config_csv(path, "review_key")
+
+    def test_human_duplicate_decision_can_be_loaded(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "duplicate_decisions.csv"
+            pd.DataFrame([{
+                "review_key": "title_key|a; b",
+                "decision": "KHONG_TRUNG",
+                "keep_article_id": "",
+                "reviewer": "reviewer-01",
+                "review_note": "Hai bài ở hai kỳ khác nhau.",
+            }]).to_csv(path, index=False)
+
+            result = cm.load_config_csv(path, "review_key")
+
+            self.assertEqual(result["title_key|a; b"]["reviewer"], "reviewer-01")
+
+    def test_ai_draft_outlier_reviews_cannot_be_loaded(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "outlier_review.csv"
+            pd.DataFrame([{
+                "article_id": "VNLAB-000001",
+                "issue_code": "OUTLIER_CONTENT_SHORT",
+                "conclusion": "HOP_LE_GIU",
+                "review_note": "AI draft",
+                "reviewer": "Claude (bản nháp) - chờ Người 2 xác nhận",
+            }]).to_csv(path, index=False)
+
+            with self.assertRaisesRegex(ValueError, "AI/draft reviewer"):
+                cm.load_outlier_review_csv(path)
+
 
 def _row(i, **kw):
     r = dict(article_id=f"VNLAB-{i:06d}", title=f"Tiêu đề {i}", content=" ".join(f"tu{i}x{k}" for k in range(30)),
@@ -64,7 +108,7 @@ def _row(i, **kw):
 class TestPipeline(unittest.TestCase):
     def run_clean(self, rows):
         raw = pd.DataFrame(rows, dtype=str)
-        return raw, *cm.clean(raw)
+        return raw, *cm.clean(raw)[:4]
 
     def test_row_count_and_raw_untouched(self):
         raw, m, ch, iss, dup = self.run_clean([_row(1), _row(2)])
@@ -128,6 +172,38 @@ class TestPipeline(unittest.TestCase):
         self.assertTrue({"OUTLIER_CONTENT_LONG", "OUTLIER_TITLE_LONG", "OUTLIER_CONTENT_SHORT"} <= codes)
         self.assertEqual(len(m), 3)
         self.assertEqual(m.loc[1, "title"], "x" * 220)  # không sửa tiêu đề
+
+    def test_decision_not_duplicate_skips_cluster_and_sets_columns(self):
+        base = " ".join(f"tu{k}" for k in range(60))
+        rows = [_row(1, content=base + " abc"), _row(2, content=base + " xyz"), _row(3)]
+        key = "near_content_tfidf|VNLAB-000001; VNLAB-000002"
+        raw = pd.DataFrame(rows, dtype=str)
+        m, _, _, dup, stats = cm.clean(raw, decisions={key: {"decision": "KHONG_TRUNG", "keep_article_id": "",
+                                                              "reviewer": "t", "review_note": "khác kỳ"}})
+        self.assertTrue(m["dup_cluster_id"].isna().all())          # không gom cụm
+        self.assertEqual(stats["clusters_before"], 1)
+        self.assertEqual(stats["clusters_after"], 0)
+        self.assertEqual(m.loc[0, "dup_review_decision"], "KHONG_TRUNG")
+        self.assertEqual(dup.loc[0, "decision"], "KHONG_TRUNG")
+        self.assertEqual(len(m), 3)
+
+    def test_decision_repost_proposes_keep_and_drop_but_keeps_rows(self):
+        base = " ".join(f"tu{k}" for k in range(60))
+        rows = [_row(1, content=base + " abc"), _row(2, content=base + " xyz")]
+        key = "near_content_tfidf|VNLAB-000001; VNLAB-000002"
+        m, _, _, dup, _ = cm.clean(pd.DataFrame(rows, dtype=str), decisions={key: {
+            "decision": "NGHI_DANG_LAI_DE_XUAT_GIU_1", "keep_article_id": "VNLAB-000001", "reviewer": "t", "review_note": "x"}})
+        self.assertEqual(m.loc[0, "dup_proposed_action"], "KEEP")
+        self.assertEqual(m.loc[1, "dup_proposed_action"], "DROP_PROPOSED")
+        self.assertEqual(m.loc[0, "dup_cluster_id"], m.loc[1, "dup_cluster_id"])
+        self.assertEqual(len(m), 2)  # không xóa bài
+
+    def test_outlier_review_merged_into_issues(self):
+        long_c = " ".join(f"w{k}" for k in range(5200))
+        ov = {"VNLAB-000001|OUTLIER_CONTENT_LONG": {"conclusion": "HOP_LE_GIU", "review_note": "ok", "reviewer": "t"}}
+        m, _, iss, _, _ = cm.clean(pd.DataFrame([_row(1, content=long_c)], dtype=str), outlier_review=ov)
+        self.assertEqual(iss.loc[iss["issue_code"] == "OUTLIER_CONTENT_LONG", "review_conclusion"].iloc[0], "HOP_LE_GIU")
+        self.assertEqual(m.loc[0, "outlier_review_conclusion"], "HOP_LE_GIU")
 
     def test_duplicate_article_id_reported(self):
         _, m, _, _, dup = self.run_clean([_row(1), _row(1, source_url="https://tuoitre.vn/khac.htm", title="Khác")])

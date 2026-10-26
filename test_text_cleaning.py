@@ -4,8 +4,7 @@ import unittest
 import unicodedata
 from pathlib import Path
 
-# Cho phep tim module trong thu muc src
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT / "5_process" / "src"))
 
 from text_cleaning import clean_text

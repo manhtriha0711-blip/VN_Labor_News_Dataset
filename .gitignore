@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+~$*.pptx
+/5_process/data/processed/articles_text_clean.csv
+/5_process/data/processed/manual_label_sample*.csv
+/5_process/reports/near_duplicate_title_candidates.csv
+/5_process/reference/person5_source_workbooks/

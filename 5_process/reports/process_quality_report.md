@@ -1,50 +1,58 @@
-# Báo cáo chất lượng Process — bản tích hợp sơ bộ
+# Báo cáo chất lượng Process — tích hợp và nghiệm thu kỹ thuật
 
-**Ngày kiểm tra:** 2026-10-26  
-**Trạng thái:** Chưa phải nghiệm thu cuối; đang chờ đầu ra của Người 3, xác nhận nhãn của Người 4, thống kê/handoff của Người 5 và slide của Người 6.
+**Ngày chạy lại:** 2026-10-27
+**Trạng thái Người 1:** **Hoàn thành nghiệm thu kỹ thuật phần tích hợp.**
+**Trạng thái gói Process:** Các đầu ra kỹ thuật của Người 1–6 đã được tích hợp/tạo và kiểm tra. Chỉ còn xác nhận nhãn của người thật; các cặp/cụm nghi trùng đã được cô lập khỏi modeling manifest.
 
-## 1. Đầu vào và schema
+## 1. Đầu vào chuẩn và schema
 
-- Nguồn chuẩn: `1_du_lieu_chinh/vn_labor_news_dataset.csv`; CSV được dùng thay vì Excel.
-- Quy mô: **12.784 dòng, 16 cột**.
+- Nguồn duy nhất: `1_du_lieu_chinh/vn_labor_news_dataset.csv`; không dùng workbook để xử lý.
+- Quy mô: **12.784 dòng, 16 cột**; `article_id` duy nhất.
 - SHA-256: `9ed13a4758ba6aecb2c6673c9d107f19739a25b1bea364bfa86bd33b23581c96`.
-- Khoảng ngày xuất bản: **2022-01-01 đến 2026-10-23**.
-- Không thiếu trường bắt buộc; `article_id` và `source_url` duy nhất.
-- Giá trị trống được giữ đúng nghĩa: `topic_secondary` trống 5.746 dòng; `sentiment` trống 12.784 dòng, chưa gán nhãn.
-- Kiểm tra schema: **PASS**, không có lỗi mức High/Critical. Có một cảnh báo thông tin về khác biệt định nghĩa `word_count`/`content`.
-- Kết quả máy đọc được: `00_input_profile.json`, `01_schema_validation.json`; lỗi kiểm tra tại `../logs/schema_validation_issues.csv`.
+- Khoảng `publish_date`: **2022-01-01 đến 2026-10-23**; không có ngày lỗi.
+- `source_url` duy nhất; tên nguồn thuộc danh sách 8 nguồn; `topic_primary` theo mã A–L.
+- Schema validation: **PASS**, 0 lỗi Critical/High. Một cảnh báo Info ghi nhận `word_count` khác `content.split()` ở 11.953/12.784 dòng; giá trị raw được giữ nguyên, khác biệt định nghĩa đã ghi tại `ISS-002`.
+- Thiếu dữ liệu được giữ đúng nghĩa: `topic_secondary` trống 5.746 dòng; `sentiment` trống 12.784 dòng, không được đổi thành “neutral”.
+- Hồ sơ máy đọc được: `00_input_profile.json`, `01_schema_validation.json`; issue schema tại `../logs/schema_validation_issues.csv`.
 
-## 2. Kết quả metadata đã chạy lại
+## 2. Chạy lại và đối chiếu tích hợp
 
-- Module Người 2 chạy thành công trên CSV hiện tại: **12.784 dòng vào, 12.784 dòng ra; raw bất biến theo SHA-256 trước/sau**.
-- Unit test metadata: **18/18 đạt**.
-- Thay đổi metadata được ghi log: 14 tiêu đề chuẩn hóa Unicode/khoảng trắng; không sửa `content`.
-- Ngoại lai được đánh cờ, không tự sửa/xóa: 9 lượt.
-- Có 67 bài được module ghi nhận chứa ký tự vô hình trong `content`; chuyển Người 3 xử lý ở trường dẫn xuất.
-- Audit trùng: 71 dòng review, 62 cụm gồm 129 bài. Chưa có quyết định loại; tất cả bản ghi vẫn được giữ.
-- `word_count` được mã Collecting tính trên thân bài trước khi có thể ghép sapo vào `content` đầu ra. Vì vậy 11.953/12.784 dòng khác `content.split()` là khác biệt định nghĩa; giữ cột gốc và dùng `word_count_recount` cho độ dài của `content` cuối khi cần.
+Đã chạy tuần tự các bước profile → schema → metadata → text cleaning → thống kê/split từ CSV nguồn. Bộ test mẫu chạy trước khi chạy dữ liệu đầy đủ.
 
-## 3. Kiểm định nhãn
+`integration_validation.json` xác nhận:
 
-- Mẫu hiện có 56 bài từ `borderline_for_review.csv`, đại diện đủ 12 chủ đề.
-- Các trường `relevance_manual`, `topic_manual`, `review_reason`, `reviewer_id`, `review_date` hiện đều trống. Vì vậy **chưa có nhãn thủ công được xác nhận** và chưa được tính precision/recall hay mức đồng thuận.
-- `label_quality.md` tự ghi là bản AI sơ bộ, có lỗi định dạng và tham chiếu một file đầu ra không nằm trong bộ file hiện tại. Các thống kê trong đó chưa được xác minh từ mẫu nhãn hiện tại.
-- Ví dụ Monaco `VNLAB-000002` là trường hợp cần đưa vào rà soát ưu tiên vì hiện mang nhãn D nhưng nội dung nói về huấn luyện viên bóng đá; không sửa nhãn tự động trước khi Người 4 xác nhận.
+- Raw vẫn cùng SHA-256 trước/sau và có 12.784 ID duy nhất.
+- Metadata CSV và Parquet đều có đúng 12.784 ID như raw.
+- Text-clean CSV có 12.784 dòng; toàn bộ 16 trường gốc được so từng dòng và giữ nguyên; `title_clean`/`content_clean` khớp hàm làm sạch ở cả 12.784 dòng.
+- Temporal split manifest và modeling eligibility manifest đều có đúng 12.784 ID, không thiếu hoặc lặp; quy tắc ngày, hold reasons và số lượng khớp raw.
+- Không có bản ghi nào bị loại khỏi các đầu ra đã kiểm tra.
 
-## 4. Trạng thái các phần việc
+Test: **45/45** test Process đạt; **7/7** test gốc đạt. Lệnh chạy được ghi trong `../README_PROCESS.md`.
 
-| Phần | Trạng thái | Bằng chứng/việc còn lại |
+## 3. Trạng thái đầu ra theo phần việc
+
+| Phần | Đã tích hợp / kiểm tra | Còn mở |
 |---|---|---|
-| Người 1 — profile, schema, điều phối | Đã có bản kiểm tra ban đầu | Profile, schema report, issue log và checklist được lưu; cần nghiệm thu sau tích hợp toàn bộ |
-| Người 2 — metadata/audit trùng | Đã chạy | 18 test đạt; audit chạy lại theo checksum hiện tại; 71 dòng duplicate review cần quyết định |
-| Người 3 — text cleaning | Chờ bàn giao | Chưa có module, test và ví dụ trước/sau trong `5_process` |
-| Người 4 — nhãn thủ công | Chờ xác nhận | 56 dòng nhãn chưa điền; cần sửa báo cáo sơ bộ và review trường hợp ưu tiên |
-| Người 5 — thống kê/Modeling handoff | Chờ bàn giao | Chưa có báo cáo, biểu đồ, đề xuất split/leakage trong `5_process` |
-| Người 6 — slide | Chờ bàn giao | Chưa có slide trong thư mục Process; cần đối chiếu mọi số liệu với báo cáo |
+| Người 1 — profile, schema, điều phối | Hồ sơ/checksum cập nhật; schema chạy; raw-preservation và khớp ID kiểm tra xuyên các module; checklist và README thống nhất | Nghiệm thu kỹ thuật hoàn tất |
+| Người 2 — metadata | 12.784 dòng vào/ra; raw bất biến; 14 thay đổi metadata được log; 9 lượt ngoại lai được đánh cờ; 71 dòng duplicate review, 62 cụm; không xóa bài | Hoàn tất phạm vi audit theo phân công. Gợi ý AI chỉ là tham khảo, không nạp thành quyết định production |
+| Người 3 — text | 12.784 dòng; cột gốc giữ nguyên; cột sạch tái tạo và kiểm tra từng dòng; ví dụ và test có sẵn | Không còn blocker kỹ thuật đã biết |
+| Người 4 — nhãn | Hướng dẫn, mẫu, validator và báo cáo chất lượng đã tích hợp; mẫu 57 bài được tái tạo trực tiếp từ raw (56 phân tầng theo topic + 1 ưu tiên ISS-001) | **0/57** được người thật xác nhận; `ISS-003` mở. Không tính gợi ý AI là nhãn |
+| Người 5 — thống kê/split | Thống kê, 5 biểu đồ, script, temporal manifest, eligibility manifest, báo cáo leakage và handoff đều sinh được | 65 ID liên quan cặp/cụm cross-split đã biết được cô lập bằng `review_hold`; heuristic không đảm bảo phát hiện hết leakage |
+| Người 6 — slide | Slide, ghi chú thuyết trình và nguồn số liệu đã tạo từ báo cáo đã đối chiếu; không chứa toàn văn | Đã tạo tại `reports/presentation.pptx` |
 
-## 5. Hạn chế và quyết định còn mở
+## 4. Split và giới hạn đánh giá
 
-1. Không coi nhãn tự động A–L hay `relevant_auto` là ground truth.
-2. Không tự gán `sentiment`; không loại bài chỉ vì cờ ngoại lai hoặc nghi trùng.
-3. Chưa tạo tập train/validation/test cho đến khi Người 5 chốt quy tắc và có nhãn/khóa chống leakage phù hợp.
-4. Đây là báo cáo tiến độ chất lượng Process dựa trên các artefact hiện có, không phải kết quả hoàn thành toàn dự án.
+- Train: **8.213** bài (trước 2025); validation: **2.562** bài (năm 2025); test: **2.009** bài (từ 2026-01-01).
+- 118 cặp tiêu đề được sàng lọc; 32 cặp nằm khác split. Đây là ứng viên, không phải phán quyết trùng.
+- Hai cụm metadata giao split: `DUP-0037` (train/validation; 2 bài) và `DUP-0059` (validation/test; 4 bài). Các bản ghi liên quan đã được giữ ở `review_hold`; không tự ý loại hoặc chuyển bài.
+- 65 ID duy nhất có liên quan đến các cặp/cụm giao split đã biết được giữ trong `modeling_eligibility_manifest.csv` với `modeling_split=review_hold`; temporal manifest gốc vẫn giữ đủ dữ liệu.
+- `topic_primary` là weak label tự động, chưa phải nhãn vàng. Chưa huấn luyện mô hình và không tuyên bố split heuristic đã loại hết leakage.
+- Chi tiết: `split_validation.md`, `split_and_leakage_checks.json`, `process_statistics.md`, `handoff_to_modeling.md`.
+
+## 5. Các việc còn mở và ranh giới nghiệm thu
+
+1. **Người 4:** người thật hoàn thành 57 dòng review mẫu, sau đó chạy validator strict. Đây là blocker duy nhất còn chờ xác nhận của con người.
+2. Có thể review các ID đang ở `review_hold` sau này; không đưa lại vào modeling trước khi ghi quyết định.
+3. Không gán sentiment; không dùng nhãn tự động làm ground truth; không công bố dữ liệu toàn văn.
+
+Các trạng thái trên cũng được theo dõi tại `../logs/issue_log.csv`. Việc phần Người 1 được nghiệm thu kỹ thuật **không đồng nghĩa** các công việc review thủ công hoặc toàn bộ Process của nhóm đã hoàn tất.

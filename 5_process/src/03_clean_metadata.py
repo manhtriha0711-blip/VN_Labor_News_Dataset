@@ -9,6 +9,9 @@ Nguyên tắc (theo kế hoạch Process):
   * Lỗi không chắc chắn -> ghi vào metadata_issues.csv, không tự suy diễn.
 
 Chạy:  python 5_process/src/03_clean_metadata.py
+Đầu vào quyết định review (do người review sửa, module chỉ đọc):
+  5_process/config/duplicate_decisions.csv  (khóa review_key = dup_type|id1; id2, đã sắp xếp)
+  5_process/config/outlier_review.csv       (khóa article_id + issue_code)
 Đầu ra:
   5_process/data/interim/metadata_clean.parquet (+ .csv UTF-8)
   5_process/data/interim/duplicate_review.csv
@@ -30,6 +33,7 @@ import pandas as pd
 REPO = Path(__file__).resolve().parents[2]
 RAW_DEFAULT = REPO / "1_du_lieu_chinh" / "vn_labor_news_dataset.csv"
 OUT_DEFAULT = REPO / "5_process"
+DECISION_PRIORITY = ["NGHI_DANG_LAI_DE_XUAT_GIU_1", "GIU_CA_HAI_CUNG_SU_KIEN", "KHONG_TRUNG"]
 
 PROJECT_START = "2022-01-01"
 PROJECT_END = "2026-10-23"
@@ -141,6 +145,78 @@ def parse_topic(label: str) -> tuple[str | None, bool]:
     return m.group(1), TOPICS[m.group(1)] == m.group(2)
 
 
+def load_config_csv(path: Path, key: str) -> dict:
+    """Load confirmed review decisions; reject AI drafts and malformed configs."""
+    if not path.exists():
+        return {}
+    t = pd.read_csv(path, dtype=str, keep_default_na=False)
+    required = {key, "decision", "keep_article_id", "reviewer", "review_note"}
+    missing = required - set(t.columns)
+    if missing:
+        raise ValueError(f"{path}: missing columns {sorted(missing)}")
+    if t[key].str.strip().eq("").any() or t[key].duplicated().any():
+        raise ValueError(f"{path}: {key} must be non-empty and unique.")
+    invalid = sorted(set(t["decision"]) - set(DECISION_PRIORITY))
+    if invalid:
+        raise ValueError(f"{path}: invalid decisions {invalid}")
+    invalid_keep = t.loc[
+        (t["decision"] == DECISION_PRIORITY[0]) & t["keep_article_id"].str.strip().eq(""),
+        key,
+    ]
+    if len(invalid_keep):
+        raise ValueError(f"{path}: proposed repost decisions require keep_article_id.")
+    unexpected_keep = t.loc[
+        (t["decision"] != DECISION_PRIORITY[0]) & t["keep_article_id"].str.strip().ne(""),
+        key,
+    ]
+    if len(unexpected_keep):
+        raise ValueError(f"{path}: keep_article_id is only valid for repost proposals.")
+    validate_human_reviewers(t, path)
+    if t["review_note"].str.strip().eq("").any():
+        raise ValueError(f"{path}: each decision requires a review_note.")
+    return t.set_index(key).to_dict("index")
+
+
+def validate_human_reviewers(rows: pd.DataFrame, path: Path) -> None:
+    if "reviewer" not in rows.columns or rows["reviewer"].str.strip().eq("").any():
+        raise ValueError(f"{path}: every review requires a human reviewer.")
+    unconfirmed = rows["reviewer"].str.contains(
+        r"\b(?:ai|claude|draft|nháp|chờ|pending)\b",
+        case=False,
+        regex=True,
+    )
+    if unconfirmed.any():
+        raise ValueError(
+            f"{path}: AI/draft reviewer is not confirmed; "
+            "a human must review before applying."
+        )
+
+
+def load_outlier_review_csv(path: Path) -> dict:
+    """Load confirmed outlier conclusions keyed by article and issue code."""
+    if not path.exists():
+        return {}
+    t = pd.read_csv(path, dtype=str, keep_default_na=False)
+    key_columns = ["article_id", "issue_code"]
+    required = set(key_columns) | {"conclusion", "review_note", "reviewer"}
+    missing = required - set(t.columns)
+    if missing:
+        raise ValueError(f"{path}: missing columns {sorted(missing)}")
+    if t[key_columns].apply(lambda column: column.str.strip().eq("")).any().any():
+        raise ValueError(f"{path}: article_id and issue_code must be non-empty.")
+    if t.duplicated(key_columns).any():
+        raise ValueError(f"{path}: article_id + issue_code must be unique.")
+    valid_conclusions = {"HOP_LE_LUU_Y", "BAT_THUONG_CAN_XEM", "HOP_LE_GIU"}
+    invalid = sorted(set(t["conclusion"]) - valid_conclusions)
+    if invalid:
+        raise ValueError(f"{path}: invalid conclusions {invalid}")
+    validate_human_reviewers(t, path)
+    if t["review_note"].str.strip().eq("").any():
+        raise ValueError(f"{path}: each conclusion requires a review_note.")
+    keys = t["article_id"] + "|" + t["issue_code"]
+    return {key: row for key, row in zip(keys, t.to_dict("records"))}
+
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -220,8 +296,10 @@ def profile_before(df: pd.DataFrame) -> dict:
     return b
 
 
-def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85):
+def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85, decisions: dict | None = None,
+          outlier_review: dict | None = None):
     df = df_raw.copy()
+    decisions, outlier_review = decisions or {}, outlier_review or {}
     changes, issues = [], []
 
     def log_change(idx, field, old, new, rule):
@@ -329,7 +407,17 @@ def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85):
     # 8) Audit trùng (KHÔNG xóa)
     df["title_key"] = df["title"].map(title_key)
     df["content_hash"] = df_raw["content"].map(content_hash)
-    dup_rows, uf = [], UnionFind()
+    dup_rows, uf, uf_all = [], UnionFind(), UnionFind()
+
+    def link(ids, key):
+        for x in ids[1:]:
+            uf_all.union(ids[0], x)
+            if decisions.get(key, {}).get("decision") != "KHONG_TRUNG":  # quyết định 'không trùng' thì không gom cụm
+                uf.union(ids[0], x)
+
+    def rkey(dtype, ids):
+        return f"{dtype}|{'; '.join(sorted(ids))}"
+
     keys = {"article_id": df["article_id"], "url_normalized": df["source_url_normalized"].replace("", pd.NA),
             "title_key": df["title_key"].replace("", pd.NA), "content_hash": df["content_hash"]}
     for dtype, s in keys.items():
@@ -338,8 +426,7 @@ def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85):
             if len(grp) < 2:
                 continue
             ids = grp["article_id"].tolist()
-            for a in ids[1:]:
-                uf.union(ids[0], a)
+            link(ids, rkey(dtype, ids))
             dup_rows.append({
                 "dup_type": dtype, "n_articles": len(grp), "article_ids": "; ".join(ids),
                 "sources": "; ".join(sorted(set(grp["source_name"]))),
@@ -356,7 +443,7 @@ def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85):
         a, b = df.iloc[i], df.iloc[j]
         if a["content_hash"] == b["content_hash"]:
             continue  # đã có ở nhóm content_hash
-        uf.union(a["article_id"], b["article_id"])
+        link([a["article_id"], b["article_id"]], rkey("near_content_tfidf", [a["article_id"], b["article_id"]]))
         dd = abs((a["publish_date"] - b["publish_date"]).days) if pd.notna(a["publish_date"]) and pd.notna(b["publish_date"]) else None
         dup_rows.append({
             "dup_type": "near_content_tfidf", "n_articles": 2, "article_ids": f"{a['article_id']}; {b['article_id']}",
@@ -371,18 +458,48 @@ def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85):
                       + ("; tiêu đề giống" if a["title_key"] == b["title_key"] else "; tiêu đề khác"),
             "suggested_action": "XEM XÉT thủ công (bài cập nhật/đăng lại/cùng sự kiện?); chưa loại bài; dùng dup_cluster_id khi chia tập",
         })
-    members: dict[str, list[str]] = {}
-    for i in list(uf.p):
-        members.setdefault(uf.find(i), []).append(i)
-    cluster_id = {}
-    for n, (root, ids) in enumerate(sorted((r, m) for r, m in members.items() if len(m) > 1), 1):
-        for i in ids:
-            cluster_id[i] = f"DUP-{n:04d}"
+    def clusters(u):
+        members: dict[str, list[str]] = {}
+        for i in list(u.p):
+            members.setdefault(u.find(i), []).append(i)
+        return {i: f"DUP-{n:04d}" for n, (root, ids) in enumerate(sorted((r, m) for r, m in members.items() if len(m) > 1), 1)
+                for i in ids}
+
+    cluster_id, cluster_all = clusters(uf), clusters(uf_all)
     df["dup_cluster_id"] = df["article_id"].map(cluster_id)
-    dup_df = pd.DataFrame(dup_rows)
+    dup_df = pd.DataFrame(dup_rows, columns=["dup_type", "n_articles", "article_ids", "sources", "publish_dates",
+                                             "same_source", "titles", "urls", "similarity", "reason", "suggested_action"])
     dup_df.insert(0, "review_id", [f"DR-{i:04d}" for i in range(1, len(dup_df) + 1)])
-    dup_df["decision"] = ""   # người review điền: giữ cả hai / loại bài ... / không phải trùng
-    dup_df["reviewer"] = ""
+    dup_df.insert(1, "review_key", [rkey(t, a.split("; ")) for t, a in zip(dup_df["dup_type"], dup_df["article_ids"])])
+    unknown_decisions = set(decisions) - set(dup_df["review_key"])
+    if unknown_decisions:
+        raise ValueError(
+            f"Duplicate decisions contain unknown review_key values: "
+            f"{sorted(unknown_decisions)[:5]}"
+        )
+    for c in ["decision", "keep_article_id", "reviewer", "review_note"]:
+        src = c
+        dup_df[c] = dup_df["review_key"].map(lambda k: decisions.get(k, {}).get(src, ""))
+    art_dec, art_act = {}, {}
+    for _, r in dup_df.iterrows():
+        if r["decision"] not in DECISION_PRIORITY:
+            continue
+        article_ids = r["article_ids"].split("; ")
+        if r["decision"] == DECISION_PRIORITY[0] and r["keep_article_id"] not in article_ids:
+            raise ValueError(
+                f"{r['review_key']}: keep_article_id must identify an article in the duplicate group."
+            )
+        for aid in article_ids:
+            if aid not in art_dec or DECISION_PRIORITY.index(r["decision"]) < DECISION_PRIORITY.index(art_dec[aid]):
+                art_dec[aid] = r["decision"]
+            if r["decision"] == DECISION_PRIORITY[0] and r["keep_article_id"]:
+                act = "KEEP" if aid == r["keep_article_id"] else "DROP_PROPOSED"
+                if art_act.get(aid) != "DROP_PROPOSED":
+                    art_act[aid] = act
+    df["dup_review_decision"] = df["article_id"].map(art_dec)
+    df["dup_proposed_action"] = df["article_id"].map(art_act)
+    stats = {"clusters_before": len(set(cluster_all.values())), "rows_before": len(cluster_all),
+             "clusters_after": len(set(cluster_id.values())), "rows_after": len(cluster_id)}
 
     # 9) Cờ theo dòng
     iss = pd.DataFrame(issues)
@@ -392,15 +509,41 @@ def clean(df_raw: pd.DataFrame, near_threshold: float = 0.85):
     else:
         df["meta_issue_flags"] = pd.NA
 
+    iss = pd.DataFrame(issues)
+    if len(iss):
+        valid_outlier_keys = {
+            f"{article_id}|{issue_code}"
+            for article_id, issue_code in zip(iss["article_id"], iss["issue_code"])
+            if issue_code.startswith("OUTLIER")
+        }
+        unknown_outlier_reviews = set(outlier_review) - valid_outlier_keys
+        if unknown_outlier_reviews:
+            raise ValueError(
+                f"Outlier reviews contain unknown issue keys: "
+                f"{sorted(unknown_outlier_reviews)[:5]}"
+            )
+        rv = [outlier_review.get(f"{a}|{k}", {}) for a, k in zip(iss["article_id"], iss["issue_code"])]
+        iss["review_conclusion"] = [x.get("conclusion", "") for x in rv]
+        iss["review_note"] = [x.get("review_note", "") for x in rv]
+        iss["reviewer"] = [x.get("reviewer", "") for x in rv]
+        oc = {a: c for a, c in zip(iss["article_id"], iss["review_conclusion"]) if c}
+    else:
+        if outlier_review:
+            raise ValueError("Outlier reviews were supplied but the input has no issues.")
+        oc = {}
+    df["outlier_review_conclusion"] = df["article_id"].map(oc)
+
     cols = ["article_id", "title", "publish_date", "publish_year", "publish_month", "publish_quarter",
             "publish_year_month", "source_name", "source_domain", "source_url", "source_url_normalized",
             "topic_primary", "topic_primary_code", "topic_secondary", "topic_secondary_codes",
             "matched_keywords", "n_keywords", "location", "sentiment", "relevance_status",
             "collection_date", "data_quality_note", "relevance_score", "word_count", "word_count_recount",
-            "title_key", "content_hash", "dup_cluster_id", "meta_issue_flags"]
+            "title_key", "content_hash", "dup_cluster_id", "dup_review_decision", "dup_proposed_action",
+            "outlier_review_conclusion", "meta_issue_flags"]
     return df[cols], pd.DataFrame(changes, columns=["article_id", "field", "old_value", "new_value", "rule"]), \
-        iss if len(iss) else pd.DataFrame(columns=["article_id", "field", "issue_code", "severity", "value", "action"]), \
-        dup_df
+        iss if len(iss) else pd.DataFrame(columns=["article_id", "field", "issue_code", "severity", "value", "action",
+                                                      "review_conclusion", "review_note", "reviewer"]), \
+        dup_df, stats
 
 
 def profile_after(m: pd.DataFrame) -> dict:
@@ -417,7 +560,7 @@ def profile_after(m: pd.DataFrame) -> dict:
     }
 
 
-def write_report(path: Path, a: dict, b: dict, changes, issues, dup_df, m, hash_before, hash_after, raw: Path):
+def write_report(path: Path, a: dict, b: dict, changes, issues, dup_df, m, hash_before, hash_after, raw: Path, stats: dict):
     def f(n):
         return f"{n:,}".replace(",", ".")
 
@@ -437,6 +580,50 @@ def write_report(path: Path, a: dict, b: dict, changes, issues, dup_df, m, hash_
                           for (fld, rule), n in changes.groupby(["field", "rule"]).size().items()) \
         or "| (không có thay đổi giá trị) | 0 |"
     n_outlier = int(issues['issue_code'].str.startswith('OUTLIER').sum()) if len(issues) else 0
+    reviewed = dup_df[dup_df["decision"] != ""] if len(dup_df) else dup_df
+    n_pending_open = len(dup_df) - len(reviewed)
+    n_drop_open = int((reviewed["decision"] == DECISION_PRIORITY[0]).sum()) if len(reviewed) else 0
+    n_ov_bad = int(((issues["review_conclusion"] == "BAT_THUONG_CAN_XEM") & issues["issue_code"].str.startswith("OUTLIER")).sum()) if len(issues) else 0
+    n_rev, n_pending = len(reviewed), len(dup_df) - len(reviewed)
+    dec_counts = reviewed["decision"].value_counts().to_dict() if n_rev else {}
+    dl = reviewed[reviewed["decision"] == DECISION_PRIORITY[0]] if n_rev else reviewed
+    dl_lines = "\n".join(
+        f"| {r.review_id} | {r.article_ids.replace('; ', ' / ')} | {r.keep_article_id} | {r.review_note.split(' Đề xuất')[0]} |"
+        for r in dl.itertuples()) or "| (không có) | | | |"
+    ov_rev = issues[issues["issue_code"].str.startswith("OUTLIER")] if len(issues) else issues
+    ov_lines = "\n".join(
+        f"| {r.article_id} | `{r.issue_code}` | {r.value} | {r.review_conclusion or 'chưa review'} | {r.review_note} |"
+        for r in ov_rev.itertuples()) or "| (không có) | | | | |"
+    ov_counts = ov_rev["review_conclusion"].replace("", "chưa review").value_counts().to_dict() if len(ov_rev) else {}
+    review_section = f"""## 6b. Trạng thái quyết định review
+
+Quyết định đã được xác nhận (nếu có) nằm ở `config/duplicate_decisions.csv` và `config/outlier_review.csv`; module đọc lại hai file này mỗi lần chạy nên kết quả tái lập được. Không nạp các file trong `config/review_drafts/` vào xử lý. Mọi quyết định có nguồn ghi là bản nháp AI phải được Người 2 xác nhận trước khi chuyển vào cấu hình chính. Không bài nào bị xóa.
+
+**Cặp nghi trùng:** có quyết định được nạp cho {f(n_rev)} / {f(len(dup_df))} dòng (còn {f(n_pending)} dòng chưa có quyết định).
+
+| Quyết định | Số dòng | Ý nghĩa |
+|---|---|---|
+| `KHONG_TRUNG` | {f(dec_counts.get('KHONG_TRUNG', 0))} | Khác kỳ/giai đoạn/sự kiện, hoặc giống do khối quảng cáo; **không** gom cụm |
+| `GIU_CA_HAI_CUNG_SU_KIEN` | {f(dec_counts.get('GIU_CA_HAI_CUNG_SU_KIEN', 0))} | Cùng sự kiện hoặc nguồn tin gốc, bài viết riêng; giữ cả hai, đánh dấu chung cụm; split theo thời gian có thể vẫn giao split |
+| `NGHI_DANG_LAI_DE_XUAT_GIU_1` | {f(dec_counts.get('NGHI_DANG_LAI_DE_XUAT_GIU_1', 0))} | Nội dung gần như một bản (PR/thông cáo viết lại sát); đề xuất giữ 1 bài, **chưa xóa**, chờ Người 1 chốt |
+
+Dữ liệu dẫn xuất đã thay đổi theo quyết định: số cụm `dup_cluster_id` từ **{f(stats['clusters_before'])}** (gom theo điểm tương đồng) xuống **{f(stats['clusters_after'])}** (chỉ gom các cặp cùng sự kiện hoặc nghi đăng lại), số bài nằm trong cụm từ {f(stats['rows_before'])} xuống {f(stats['rows_after'])}. Metadata có thêm ba cột `dup_review_decision`, `dup_proposed_action` (`KEEP`/`DROP_PROPOSED`) và `outlier_review_conclusion`.
+
+Các cặp đề xuất giữ 1 bài (quy tắc chọn bài giữ: đăng sớm hơn, cùng ngày thì bài dài hơn):
+
+| Dòng | Cặp bài | Đề xuất giữ | Căn cứ |
+|---|---|---|---|
+{dl_lines}
+
+Quan sát cho các bước sau (không phải lỗi của metadata): nhiều cặp giống nhau vì hai báo cùng trích một văn bản/thông cáo; bài dạng bản tin/điểm tin/podcast có thể cần Người 4 xem về mức liên quan. Text cleaning chỉ xử lý ký tự/Unicode/khoảng trắng, không xóa boilerplate quảng cáo nếu chưa có tiêu chí kiểm tra được.
+
+**Ngoại lai (9 lượt đánh cờ):** kết luận {", ".join(f"`{k}` {v}" for k, v in ov_counts.items())}. Không bài nào bị loại.
+
+| Bài | Mã | Giá trị | Kết luận | Ghi chú |
+|---|---|---|---|---|
+{ov_lines}
+
+"""
     same_ok = "ĐẠT" if hash_before == hash_after and a["rows"] == b["rows"] else "KHÔNG ĐẠT"
 
     path.write_text(f"""# Báo cáo chuẩn hóa metadata - trước/sau (Người 2)
@@ -445,14 +632,14 @@ def write_report(path: Path, a: dict, b: dict, changes, issues, dup_df, m, hash_
 
 > Báo cáo sinh tự động từ lần chạy thực tế; số liệu dưới đây tái lập được bằng cách chạy lại module.
 
-## 0. Vấn đề còn mở (cần người quyết định)
+## 0. Trạng thái issue và review
 
 | # | Vấn đề | Quy mô | Người xử lý | Bước tiếp theo |
 |---|---|---|---|---|
-| 1 | ISS-002: `word_count` khác đếm lại `content` | {f(mism)} / {f(len(m))} dòng | Người 1 xác nhận | Đối chiếu cách đếm trong mã Collecting rồi chốt dùng cột nào |
-| 2 | Cặp/nhóm nghi trùng chờ quyết định giữ/loại | {f(len(dup_df))} dòng review, {f(a['dup_clusters'])} cụm | Người 2 + Người 1 | Điền quyết định cho từng dòng `duplicate_review.csv`; chưa loại bài nào |
-| 3 | Ngoại lai độ dài (bài dài >{WORDS_LONG} từ, ngắn <{WORDS_SHORT} từ; tiêu đề dài >{TITLE_LONG} ký tự) | {f(n_outlier)} lượt đánh cờ | Người 2 xem tay, Người 5 cân nhắc khi thống kê | Xem `metadata_issues.csv` (mã `OUTLIER_*`) |
-| 4 | Ký tự vô hình trong `content` | {f(b['content_invisible'])} bài | Người 3 | Xử lý trong bước làm sạch văn bản |
+| 1 | ISS-002: `word_count` khác đếm lại `content` | {f(mism)} / {f(len(m))} dòng | Đã giải quyết bằng đối chiếu mã Collecting; giữ nguyên `word_count` raw | Xem mục 7; `word_count_recount` chỉ mô tả `content` cuối |
+| 2 | Audit cặp nghi trùng | {f(len(dup_df))} dòng review, {f(a['dup_clusters'])} cụm theo kết quả audit | Hoàn tất phạm vi audit; không áp dụng đề xuất AI thành quyết định | Xem mục 6b; không bài nào bị loại |
+| 3 | Ngoại lai độ dài (bài dài >{WORDS_LONG} từ, ngắn <{WORDS_SHORT} từ; tiêu đề dài >{TITLE_LONG} ký tự) | {f(n_outlier)} lượt đánh cờ; chưa có kết luận người review | Đã hoàn tất cờ audit; không sửa/xóa bài | Chỉ cần reviewer thật nếu sau này nhóm muốn áp dụng quyết định loại/giữ |
+| 4 | Ký tự vô hình trong `content` raw | {f(b['content_invisible'])} bài | Người 3 đã chạy text-clean output riêng | `content_clean` đã được đối chiếu; raw `content` không đổi |
 
 ## 1. Bảo toàn raw và số dòng
 
@@ -523,26 +710,26 @@ Chỉ audit, **không loại bản ghi nào**. Gồm khớp chính xác theo kh�
 |---|---|---|
 {dup_lines}
 
-Hợp nhất các nhóm (union-find) thành **{f(a['dup_clusters'])}** cụm `dup_cluster_id`, gồm **{f(a['dup_clustered_rows'])}** bài. Người 5 dùng cột này để giữ các bài cùng cụm trong cùng một tập khi chia train/validation/test (tránh rò rỉ).
+Hợp nhất các nhóm (union-find) thành **{f(a['dup_clusters'])}** cụm `dup_cluster_id`, gồm **{f(a['dup_clustered_rows'])}** bài. Đây là kết quả audit, không phải quyết định xác nhận trùng. Cần đối chiếu với `split_validation.md` và rà soát mọi cụm giao split trước khi chốt đánh giá.
 
-## 7. Đối chiếu ISS-002 (`word_count`)
+{review_section}## 7. Đối chiếu ISS-002 (`word_count`)
 
 Đếm lại `content.split()` trên content raw (cột `word_count_recount`, chỉ để đối chiếu; `word_count` gốc giữ nguyên):
 
 - Khác `word_count`: **{f(mism)} / {f(len(m))}** dòng ({mism / len(m):.1%}).
 - Trong số đó, đếm lại **lớn hơn** `word_count`: {f(longer)} dòng; trung vị chênh lệch {diff[diff != 0].median():.0f} từ.
-- Mã Collecting xác nhận `word_count` được tính bằng `len(content.split())` trên phần thân bài trích xuất trước khi tạo trường cuối cùng; trường `content` xuất ra có thể ghép thêm sapo. Vì vậy đây là khác biệt định nghĩa giữa hai trường, không phải căn cứ để sửa `word_count` gốc. Giữ nguyên cột gốc và dùng `word_count_recount` khi cần độ dài theo `content` cuối.
+- Mã Collecting `4_ma_nguon/clean_and_export.py` tính `word_count` trên thân bài trước khi có thể ghép sapo vào `content` đầu ra; khác biệt định nghĩa đã được xác nhận và `ISS-002` đã resolved. Giữ nguyên `word_count` raw; dùng `word_count_recount` khi cần độ dài của `content` cuối.
 
 ## 8. Việc chuyển cho Người 3 (văn bản)
 
-- {f(b['content_invisible'])} bài có ký tự vô hình (zero-width, ví dụ U+200B) trong `content`; module này **không sửa `content`**.
+- {f(b['content_invisible'])} bài có ký tự vô hình (zero-width, ví dụ U+200B) trong `content` raw; module metadata này **không sửa `content`**. Bước Người 3 tạo `content_clean` riêng và đã được kiểm tra trên toàn bộ dữ liệu.
 - {f(ws['title'])} tiêu đề có ký tự vô hình đã được chuẩn hóa (log ở `metadata_change_log.csv`).
 
 ## 9. Giới hạn
 
-- Gần trùng chỉ dựa trên độ tương đồng TF-IDF với một ngưỡng; có thể bỏ sót bài viết lại bằng từ ngữ khác, và có thể nêu cả bài cập nhật cùng sự kiện. Mọi cặp đều cần người xem quyết định.
+- Các quyết định trong `config/duplicate_decisions.csv` và `config/outlier_review.csv` phải được người phụ trách xác nhận; bản nháp trong `config/review_drafts/` không được áp dụng. Gần trùng chỉ dựa trên độ tương đồng TF-IDF với một ngưỡng; có thể bỏ sót bài viết lại bằng từ ngữ khác, và có thể nêu cả bài cập nhật cùng sự kiện. Mọi cặp đều cần người xem quyết định.
 - Chuẩn hóa `www.`/`http` chỉ áp dụng cho `source_url_normalized`; có thể coi hai URL khác nhau là một, nên các cặp trùng vẫn cần xem tay.
-- Tiêu đề chỉ chuẩn hóa Unicode/khoảng trắng; làm sạch sâu văn bản thuộc Người 3.
+- Text cleaning chuẩn hóa ký tự/Unicode và khoảng trắng; không áp dụng quy tắc xóa boilerplate quảng cáo nếu chưa có tiêu chí kiểm tra được.
 """, encoding="utf-8")
 
 
@@ -561,7 +748,11 @@ def main(argv=None):
     df_raw = pd.read_csv(args.raw, dtype=str, keep_default_na=False, encoding="utf-8")
     before = profile_before(df_raw)
 
-    m, changes, issues, dup_df = clean(df_raw, args.near_threshold)
+    cfg = args.out / "config"
+    decisions = load_config_csv(cfg / "duplicate_decisions.csv", "review_key")
+    outlier_review = load_outlier_review_csv(cfg / "outlier_review.csv")
+
+    m, changes, issues, dup_df, stats = clean(df_raw, args.near_threshold, decisions, outlier_review)
     after = profile_after(m)
 
     m.to_parquet(interim / "metadata_clean.parquet", index=False)
@@ -572,12 +763,12 @@ def main(argv=None):
 
     hash_after = sha256_file(args.raw)
     write_report(reports / "metadata_audit.md", after, before, changes, issues, dup_df, m,
-                 hash_before, hash_after, args.raw)
+                 hash_before, hash_after, args.raw, stats)
 
     assert len(m) == len(df_raw), "Số dòng ra khác số dòng vào"
     assert hash_before == hash_after, "Raw bị thay đổi!"
-    print(f"OK: {len(m)} dòng | thay đổi {len(changes)} | cờ {len(issues)} | nhóm trùng {len(dup_df)} "
-          f"| cụm {after['dup_clusters']} | raw bất biến")
+    print(f"OK: {len(m)} rows | {len(changes)} changes | {len(issues)} issues | {len(dup_df)} duplicate groups "
+          f"| {after['dup_clusters']} clusters (before review: {stats['clusters_before']}) | raw unchanged")
     return 0
 
 

@@ -1,10 +1,10 @@
-article_id,field,issue_code,severity,value,action
-VNLAB-001959,content,OUTLIER_CONTENT_LONG,Low,13683 từ,"đánh cờ, cần xem tay (bài rất dài/ghép nhiều bài?)"
-VNLAB-006226,content,OUTLIER_CONTENT_LONG,Low,10711 từ,"đánh cờ, cần xem tay (bài rất dài/ghép nhiều bài?)"
-VNLAB-006577,content,OUTLIER_CONTENT_LONG,Low,9811 từ,"đánh cờ, cần xem tay (bài rất dài/ghép nhiều bài?)"
-VNLAB-000473,content,OUTLIER_CONTENT_SHORT,Low,87 từ,"đánh cờ, cần xem tay (thiếu nội dung?)"
-VNLAB-000720,content,OUTLIER_CONTENT_SHORT,Low,99 từ,"đánh cờ, cần xem tay (thiếu nội dung?)"
-VNLAB-002081,content,OUTLIER_CONTENT_SHORT,Low,98 từ,"đánh cờ, cần xem tay (thiếu nội dung?)"
-VNLAB-005534,content,OUTLIER_CONTENT_SHORT,Low,69 từ,"đánh cờ, cần xem tay (thiếu nội dung?)"
-VNLAB-004910,title,OUTLIER_TITLE_LONG,Low,237 ký tự,"đánh cờ, cần xem tay"
-VNLAB-011093,title,OUTLIER_TITLE_LONG,Low,203 ký tự,"đánh cờ, cần xem tay"
+article_id,field,issue_code,severity,value,action,review_conclusion,review_note,reviewer
+VNLAB-001959,content,OUTLIER_CONTENT_LONG,Low,13683 từ,"đánh cờ, cần xem tay (bài rất dài/ghép nhiều bài?)",,,
+VNLAB-006226,content,OUTLIER_CONTENT_LONG,Low,10711 từ,"đánh cờ, cần xem tay (bài rất dài/ghép nhiều bài?)",,,
+VNLAB-006577,content,OUTLIER_CONTENT_LONG,Low,9811 từ,"đánh cờ, cần xem tay (bài rất dài/ghép nhiều bài?)",,,
+VNLAB-000473,content,OUTLIER_CONTENT_SHORT,Low,87 từ,"đánh cờ, cần xem tay (thiếu nội dung?)",,,
+VNLAB-000720,content,OUTLIER_CONTENT_SHORT,Low,99 từ,"đánh cờ, cần xem tay (thiếu nội dung?)",,,
+VNLAB-002081,content,OUTLIER_CONTENT_SHORT,Low,98 từ,"đánh cờ, cần xem tay (thiếu nội dung?)",,,
+VNLAB-005534,content,OUTLIER_CONTENT_SHORT,Low,69 từ,"đánh cờ, cần xem tay (thiếu nội dung?)",,,
+VNLAB-004910,title,OUTLIER_TITLE_LONG,Low,237 ký tự,"đánh cờ, cần xem tay",,,
+VNLAB-011093,title,OUTLIER_TITLE_LONG,Low,203 ký tự,"đánh cờ, cần xem tay",,,

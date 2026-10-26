@@ -1,27 +1,38 @@
-# Checklist tích hợp và nghiệm thu — Người 1
+# Checklist tích hợp và nghiệm thu Process
 
-**Trạng thái hiện tại:** Đang thực hiện; chưa được xem là bản Process cuối.
+**Cập nhật:** 2026-10-27
+**Người 1 — nghiệm thu kỹ thuật:** Hoàn thành.
+**Toàn bộ gói kỹ thuật:** Hoàn thành; nhãn thủ công của Người 4 vẫn chờ người thật xác nhận.
 
-## Đầu vào và schema
+## Người 1 — đầu vào, schema và tích hợp
 
-- [x] Lưu hồ sơ đầu vào và SHA-256 tại `00_input_profile.json`/`.md`.
-- [x] Chạy kiểm tra schema; lưu kết quả và issue log.
-- [x] Xác nhận CSV gốc vẫn nguyên vẹn; không xử lý từ Excel.
-- [x] Ghi rõ các trường thiếu được chấp nhận: `topic_secondary`, `sentiment`.
+- [x] Xác nhận CSV là nguồn chuẩn; profile có 12.784 dòng, 16 cột, checksum và phiên bản chạy.
+- [x] Kiểm tra schema, ID/URL trùng, ngày, nguồn và topic; ghi issue. Kết quả PASS, không có lỗi Critical/High.
+- [x] Giữ nguyên các trường thiếu có chủ ý; không tự gán `sentiment` hoặc sửa `word_count`.
+- [x] Chạy unit tests trước pipeline toàn bộ; không ghi đè raw.
+- [x] Tích hợp và chạy lại metadata Người 2, text cleaning Người 3, thống kê/split Người 5.
+- [x] Đối chiếu raw preservation, dòng, ID, text-clean fields và split manifest bằng `validate_process_integration.py`.
+- [x] Cập nhật README, báo cáo chất lượng, issue log và hướng dẫn chạy.
 
-## Tích hợp module
+## Trạng thái các đầu việc liên quan
 
-- [x] Người 2: metadata cleaning, audit trùng; unit tests đạt 18/18 sau khi khôi phục cấu trúc.
-- [ ] Người 3: text cleaning, tests, ví dụ trước/sau.
-- [ ] Người 4: người kiểm định xác nhận mẫu nhãn; bản hiện tại còn trống nhãn thủ công.
-- [ ] Người 5: thống kê, biểu đồ, đề xuất split và leakage audit.
-- [ ] Người 6: slide khớp số liệu đã xác minh, không chứa toàn văn bài báo.
+- [x] Người 2: module, audit list, logs và outputs chạy được; AI recommendations không được áp dụng như quyết định của người review; `ISS-006` đóng theo phạm vi audit.
+- [x] Người 3: module, tests, ví dụ và output đầy đủ; đầu ra kiểm tra trên 12.784 dòng.
+- [ ] Người 4: mẫu/guideline/validator sẵn sàng; còn 57/57 nhãn chờ người thật (`ISS-003`).
+- [x] Người 5: báo cáo/split/handoff được tái sinh; 65 ID liên quan các ứng viên cross-split đã biết được gắn `review_hold` (`ISS-007` mitigated).
+- [x] Người 6: slide, ghi chú thuyết trình và nguồn số liệu đã tạo; không có toàn văn bài báo.
 
-## Chất lượng và bàn giao
+## Kiểm tra đã chạy
 
-- [x] Làm rõ định nghĩa `word_count` với mã Collecting; giữ nguyên raw và ghi rõ trường đếm lại.
-- [ ] Review các cụm trùng; chưa loại bài tự động.
-- [ ] Chạy pipeline tích hợp trên mẫu, sau đó toàn bộ khi kiểm thử đạt.
-- [ ] Đối chiếu số dòng, schema, hash raw, issue log, báo cáo và slide.
-- [ ] README có lệnh chạy đúng từ thư mục gốc và yêu cầu môi trường.
-- [ ] Mở thử các file bàn giao; loại dữ liệu toàn văn khỏi nội dung công khai.
+- [x] `python -m unittest discover -s 5_process/tests -p "test_*.py" -v` — 45/45 đạt.
+- [x] `python -m unittest test_text_cleaning -v` — 7/7 đạt.
+- [x] Pipeline từ raw: profile → schema → metadata → text cleaning → thống kê/split.
+- [x] `python 5_process/src/validate_process_integration.py` — PASS; raw bất biến, 12.784 dòng/ID đối chiếu khớp.
+- [x] `python 5_process/src/create_manual_label_sample.py` — tạo lại 57 dòng từ raw: 56 phân tầng theo topic + 1 ví dụ ưu tiên.
+- [x] `python 5_process/src/validate_manual_labels.py` — source fields đối chiếu khớp; báo đúng 0 reviewed, 57 pending.
+- [x] `python 5_process/src/create_process_presentation.py` — tạo slide và speaker notes theo số liệu đã kiểm tra.
+
+## Điều kiện trước khi gọi toàn bộ Process là hoàn tất
+
+1. Người 4 hoàn tất review thủ công mẫu; không thể thay xác nhận người thật bằng nhãn AI.
+2. Nếu muốn đưa các ID `review_hold` trở lại modeling, ghi quyết định review và chạy lại leakage audit.

@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "raw_file": "1_du_lieu_chinh\\vn_labor_news_dataset.csv",
+  "raw_sha256": "9ed13a4758ba6aecb2c6673c9d107f19739a25b1bea364bfa86bd33b23581c96",
+  "raw_rows": 12784,
+  "schema_status": "PASS",
+  "schema_issue_counts": {
+    "WORD_COUNT_DIFFERS_FROM_CONTENT_SPLIT": 1
+  },
+  "metadata_csv_rows": 12784,
+  "metadata_parquet_rows": 12784,
+  "clean_text": {
+    "passed": true,
+    "rows_checked": 12784,
+    "original_fields_preserved": true
+  },
+  "split": {
+    "passed": true,
+    "rows_checked": 12784,
+    "split_counts": {
+      "train": 8213,
+      "validation": 2562,
+      "test": 2009
+    },
+    "modeling_eligibility_rows_checked": 12784,
+    "modeling_review_hold_rows": 65,
+    "modeling_eligible_split_counts": {
+      "train": 8185,
+      "validation": 2544,
+      "test": 1990
+    },
+    "known_cross_split_title_candidates_quarantined": true
+  },
+  "raw_unchanged": true
+}
