@@ -58,10 +58,6 @@ python 5_process/src/create_manual_label_sample.py
 python 5_process/src/validate_manual_labels.py
 ```
 
-```powershell
-python 5_process/src/create_process_presentation.py
-```
-
 `01_profile_data.py` lập hồ sơ đầu vào; `02_validate_schema.py` xác thực schema và ghi issue. Các bước sau đều đọc CSV chuẩn `1_du_lieu_chinh/vn_labor_news_dataset.csv`; không xử lý từ Excel và không ghi đè dữ liệu Collecting.
 
 `validate_process_integration.py` đối chiếu SHA-256, số dòng/ID giữa raw và các đầu ra metadata, text cleaning và split; kiểm tra trường raw được giữ nguyên trong CSV làm sạch và các cột `_clean` khớp hàm làm sạch. Kết quả được lưu tại `reports/integration_validation.json`. Nếu một bước trả mã lỗi khác 0, dừng pipeline và xử lý lỗi trước khi chạy tiếp.
@@ -92,7 +88,7 @@ Lệnh đọc CSV nguồn ở chế độ chỉ đọc, kiểm tra schema/ID/ng�
 
 `topic_primary` là weak label tự động, không phải nhãn vàng. `split_manifest.csv` giữ nguyên mốc ngày để audit; script bổ sung `modeling_eligibility_manifest.csv`, gắn các bản ghi thuộc cặp/cụm đã biết giao split thành `review_hold` để chúng không đi vào train/evaluation trước khi được rà soát. Đây là heuristic, không chứng minh không còn leakage. Không huấn luyện mô hình trong bước này. Xem `reports/handoff_to_modeling.md` và `reports/split_validation.md` trước khi dùng manifest.
 
-`create_process_presentation.py` tạo `reports/presentation.pptx` cùng ghi chú thuyết trình `reports/presentation_notes.md` từ các báo cáo đã xác minh và biểu đồ sinh lại được. Slide không đưa tiêu đề hoặc toàn văn bài báo.
+Người 6 có thể dùng `reports/process_quality_report.md`, `reports/process_statistics.md`, `reports/split_validation.md` và biểu đồ trong `reports/charts/` làm nguồn đã kiểm tra để tự soạn slide. Phần slide được bàn giao riêng, chưa nằm trong gói Process này.
 
 ## Làm sạch văn bản
 

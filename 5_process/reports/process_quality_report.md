@@ -2,7 +2,7 @@
 
 **Ngày chạy lại:** 2026-10-27
 **Trạng thái Người 1:** **Hoàn thành nghiệm thu kỹ thuật phần tích hợp.**
-**Trạng thái gói Process:** Các đầu ra kỹ thuật của Người 1–6 đã được tích hợp/tạo và kiểm tra. Chỉ còn xác nhận nhãn của người thật; các cặp/cụm nghi trùng đã được cô lập khỏi modeling manifest.
+**Trạng thái gói Process:** Các đầu ra tích hợp của Người 1–5 đã được tạo và kiểm tra. Slide của Người 6 được để ngoài gói này để thành viên tự thực hiện; nhãn thủ công vẫn chờ người thật xác nhận. Các cặp/cụm nghi trùng đã biết được cô lập khỏi modeling manifest.
 
 ## 1. Đầu vào chuẩn và schema
 
@@ -38,7 +38,7 @@ Test: **45/45** test Process đạt; **7/7** test gốc đạt. Lệnh chạy đ
 | Người 3 — text | 12.784 dòng; cột gốc giữ nguyên; cột sạch tái tạo và kiểm tra từng dòng; ví dụ và test có sẵn | Không còn blocker kỹ thuật đã biết |
 | Người 4 — nhãn | Hướng dẫn, mẫu, validator và báo cáo chất lượng đã tích hợp; mẫu 57 bài được tái tạo trực tiếp từ raw (56 phân tầng theo topic + 1 ưu tiên ISS-001) | **0/57** được người thật xác nhận; `ISS-003` mở. Không tính gợi ý AI là nhãn |
 | Người 5 — thống kê/split | Thống kê, 5 biểu đồ, script, temporal manifest, eligibility manifest, báo cáo leakage và handoff đều sinh được | 65 ID liên quan cặp/cụm cross-split đã biết được cô lập bằng `review_hold`; heuristic không đảm bảo phát hiện hết leakage |
-| Người 6 — slide | Slide, ghi chú thuyết trình và nguồn số liệu đã tạo từ báo cáo đã đối chiếu; không chứa toàn văn | Đã tạo tại `reports/presentation.pptx` |
+| Người 6 — slide | Báo cáo chất lượng, thống kê, split và biểu đồ đã sẵn sàng làm nguồn | Chưa tạo slide; bàn giao riêng cho Người 6 |
 
 ## 4. Split và giới hạn đánh giá
 
@@ -51,8 +51,9 @@ Test: **45/45** test Process đạt; **7/7** test gốc đạt. Lệnh chạy đ
 
 ## 5. Các việc còn mở và ranh giới nghiệm thu
 
-1. **Người 4:** người thật hoàn thành 57 dòng review mẫu, sau đó chạy validator strict. Đây là blocker duy nhất còn chờ xác nhận của con người.
-2. Có thể review các ID đang ở `review_hold` sau này; không đưa lại vào modeling trước khi ghi quyết định.
-3. Không gán sentiment; không dùng nhãn tự động làm ground truth; không công bố dữ liệu toàn văn.
+1. **Người 4:** người thật hoàn thành 57 dòng review mẫu, sau đó chạy validator strict.
+2. **Người 6:** tạo slide, ghi chú thuyết trình và nguồn số liệu theo phân công; deliverable này chưa được đưa vào nhánh tích hợp.
+3. Có thể review các ID đang ở `review_hold` sau này; không đưa lại vào modeling trước khi ghi quyết định.
+4. Không gán sentiment; không dùng nhãn tự động làm ground truth; không công bố dữ liệu toàn văn.
 
 Các trạng thái trên cũng được theo dõi tại `../logs/issue_log.csv`. Việc phần Người 1 được nghiệm thu kỹ thuật **không đồng nghĩa** các công việc review thủ công hoặc toàn bộ Process của nhóm đã hoàn tất.

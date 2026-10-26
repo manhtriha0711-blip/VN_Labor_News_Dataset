@@ -11,7 +11,7 @@ Trang này là lối vào nhanh cho dự án. Nếu chưa chắc nên mở file 
 | Đọc dữ liệu chuẩn bằng Python | `1_du_lieu_chinh/vn_labor_news_dataset.csv` |
 | Xem thử một phần dữ liệu | `1_du_lieu_chinh/xem_nhanh_200_bai.xlsx` |
 | Xem thống kê và báo cáo của giai đoạn trước | `2_thong_ke_bao_cao/` |
-| Xem slide thuyết trình Process | `5_process/reports/presentation.pptx` |
+| Chuẩn bị làm slide Người 6 | `Phan_cong_Process_6_nguoi.md` và `5_process/reports/process_quality_report.md` |
 | Thực hiện review nhãn | `5_process/config/labeling_guideline.md` và `5_process/data/processed/manual_label_sample.csv` |
 | Kiểm tra split/leakage trước Modeling | `5_process/reports/handoff_to_modeling.md` |
 | Xem phân công nhóm | `Phan_cong_Process_6_nguoi.md` |
@@ -22,6 +22,7 @@ Không mở các file CSV trung gian, biểu đồ hay manifest nếu chỉ cầ
 
 - Dữ liệu chuẩn có 12.784 dòng và 16 cột; CSV là nguồn xử lý chính. Không ghi đè dữ liệu nguồn.
 - Các kiểm tra Process gần nhất: 45/45 test Process, 7/7 test gốc và integration validation PASS.
+- Phần slide của Người 6 chưa nằm trong đợt tích hợp này; có thể bắt đầu từ báo cáo chất lượng và thống kê đã kiểm tra.
 - Mẫu review có 57 dòng, nhưng **0/57 nhãn được người thật xác nhận**. Đây vẫn là phần cần hoàn tất; không dùng nhãn AI thay thế.
 - Có 65 ID thuộc các ứng viên/cụm giao split đã biết được đánh dấu `review_hold`; loại chúng khỏi modeling cho đến khi có quyết định phù hợp.
 - Process chưa huấn luyện mô hình. Xem báo cáo chất lượng và handoff trước khi bắt đầu Modeling.
