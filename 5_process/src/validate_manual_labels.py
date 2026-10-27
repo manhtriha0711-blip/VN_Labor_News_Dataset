@@ -18,6 +18,12 @@ MANUAL_FIELDS = (
     "reviewer_id",
     "review_date",
 )
+REQUIRED_REVIEW_FIELDS = (
+    "relevance_manual",
+    "review_reason",
+    "reviewer_id",
+    "review_date",
+)
 RELEVANCE_LABELS = {"Relevant", "Borderline", "Not relevant", "Uncertain"}
 TOPIC_LABELS = {f"{code} - {name}" for code, (name, _terms) in TOPICS.items()}
 PRIORITY_SAMPLE_ISSUES = {"VNLAB-000002": "ISS-001"}
@@ -109,14 +115,13 @@ def validate_records(sample_rows, source_rows):
             errors.append(f"{article_id}: invalid or missing sample_reason.")
 
         values = {field: row[field].strip() for field in MANUAL_FIELDS}
-        populated = [bool(value) for value in values.values()]
-        if not any(populated):
+        if not any(values.values()):
             pending += 1
             continue
-        if not all(populated):
-            missing = [
-                field for field, value in values.items() if not value
-            ]
+        missing = [
+            field for field in REQUIRED_REVIEW_FIELDS if not values[field]
+        ]
+        if missing:
             errors.append(
                 f"{article_id}: incomplete manual review fields: "
                 + ", ".join(missing)

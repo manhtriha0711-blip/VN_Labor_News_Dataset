@@ -2,7 +2,7 @@
 
 **Ngày chạy lại:** 2026-10-27
 **Trạng thái Người 1:** **Hoàn thành nghiệm thu kỹ thuật phần tích hợp.**
-**Trạng thái gói Process:** Các đầu ra tích hợp của Người 1–5 đã được tạo và kiểm tra. Slide của Người 6 được để ngoài gói này để thành viên tự thực hiện; nhãn thủ công vẫn chờ người thật xác nhận. Các cặp/cụm nghi trùng đã biết được cô lập khỏi modeling manifest.
+**Trạng thái gói Process:** Các đầu ra tích hợp của Người 1–5 đã được tạo và kiểm tra. Mẫu nhãn thủ công 57/57 đã được reviewer RV004 xác nhận và validator strict đạt. Slide của Người 6 được để ngoài gói này để thành viên tự thực hiện. Các cặp/cụm nghi trùng đã biết được cô lập khỏi modeling manifest.
 
 ## 1. Đầu vào chuẩn và schema
 
@@ -27,7 +27,7 @@
 - Temporal split manifest và modeling eligibility manifest đều có đúng 12.784 ID, không thiếu hoặc lặp; quy tắc ngày, hold reasons và số lượng khớp raw.
 - Không có bản ghi nào bị loại khỏi các đầu ra đã kiểm tra.
 
-Test: **45/45** test Process đạt; **7/7** test gốc đạt. Lệnh chạy được ghi trong `../README_PROCESS.md`.
+Test: **47/47** test Process đạt; **7/7** test gốc đạt. Lệnh chạy được ghi trong `../README_PROCESS.md`.
 
 ## 3. Trạng thái đầu ra theo phần việc
 
@@ -36,7 +36,7 @@ Test: **45/45** test Process đạt; **7/7** test gốc đạt. Lệnh chạy đ
 | Người 1 — profile, schema, điều phối | Hồ sơ/checksum cập nhật; schema chạy; raw-preservation và khớp ID kiểm tra xuyên các module; checklist và README thống nhất | Nghiệm thu kỹ thuật hoàn tất |
 | Người 2 — metadata | 12.784 dòng vào/ra; raw bất biến; 14 thay đổi metadata được log; 9 lượt ngoại lai được đánh cờ; 71 dòng duplicate review, 62 cụm; không xóa bài | Hoàn tất phạm vi audit theo phân công. Gợi ý AI chỉ là tham khảo, không nạp thành quyết định production |
 | Người 3 — text | 12.784 dòng; cột gốc giữ nguyên; cột sạch tái tạo và kiểm tra từng dòng; ví dụ và test có sẵn | Không còn blocker kỹ thuật đã biết |
-| Người 4 — nhãn | Hướng dẫn, mẫu, validator và báo cáo chất lượng đã tích hợp; mẫu 57 bài được tái tạo trực tiếp từ raw (56 phân tầng theo topic + 1 ưu tiên ISS-001) | **0/57** được người thật xác nhận; `ISS-003` mở. Không tính gợi ý AI là nhãn |
+| Người 4 — nhãn | Mẫu 57 bài (56 phân tầng theo topic + 1 ưu tiên ISS-001) được review bởi RV004 ngày 2026-10-27; validator strict đạt; báo cáo chất lượng cập nhật | Hoàn tất cho mẫu 57 bài; không suy rộng kết quả thành nhãn vàng toàn tập |
 | Người 5 — thống kê/split | Thống kê, 5 biểu đồ, script, temporal manifest, eligibility manifest, báo cáo leakage và handoff đều sinh được | 65 ID liên quan cặp/cụm cross-split đã biết được cô lập bằng `review_hold`; heuristic không đảm bảo phát hiện hết leakage |
 | Người 6 — slide | Báo cáo chất lượng, thống kê, split và biểu đồ đã sẵn sàng làm nguồn | Chưa tạo slide; bàn giao riêng cho Người 6 |
 
@@ -51,9 +51,8 @@ Test: **45/45** test Process đạt; **7/7** test gốc đạt. Lệnh chạy đ
 
 ## 5. Các việc còn mở và ranh giới nghiệm thu
 
-1. **Người 4:** người thật hoàn thành 57 dòng review mẫu, sau đó chạy validator strict.
-2. **Người 6:** tạo slide, ghi chú thuyết trình và nguồn số liệu theo phân công; deliverable này chưa được đưa vào nhánh tích hợp.
-3. Có thể review các ID đang ở `review_hold` sau này; không đưa lại vào modeling trước khi ghi quyết định.
-4. Không gán sentiment; không dùng nhãn tự động làm ground truth; không công bố dữ liệu toàn văn.
+1. **Người 6:** tạo slide, ghi chú thuyết trình và nguồn số liệu theo phân công; deliverable này chưa được đưa vào nhánh tích hợp.
+2. Có thể review các ID đang ở `review_hold` sau này; không đưa lại vào modeling trước khi ghi quyết định.
+3. Không gán sentiment; không dùng nhãn tự động làm ground truth; không công bố dữ liệu toàn văn.
 
-Các trạng thái trên cũng được theo dõi tại `../logs/issue_log.csv`. Việc phần Người 1 được nghiệm thu kỹ thuật **không đồng nghĩa** các công việc review thủ công hoặc toàn bộ Process của nhóm đã hoàn tất.
+Các trạng thái trên cũng được theo dõi tại `../logs/issue_log.csv`. Việc mẫu nhãn được nghiệm thu **không đồng nghĩa** toàn bộ Process của nhóm đã hoàn tất; phần slide Người 6 vẫn bàn giao riêng.
