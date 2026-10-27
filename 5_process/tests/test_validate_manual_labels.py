@@ -55,6 +55,30 @@ class TestValidateManualLabels(unittest.TestCase):
         self.assertEqual(pending, 0)
         self.assertEqual(counts, {"Relevant": 1})
 
+    def test_accepts_not_relevant_without_topic(self):
+        row = _review_row()
+        row.update(relevance_manual="Not relevant", topic_manual="")
+
+        errors, pending, counts = validate_records([row], [_source_row()])
+
+        self.assertEqual(errors, [])
+        self.assertEqual(pending, 0)
+        self.assertEqual(counts, {"Not relevant": 1})
+
+    def test_rejects_topic_for_not_relevant(self):
+        row = _review_row()
+        row.update(
+            relevance_manual="Not relevant",
+            topic_manual="A - Thị trường lao động Việt Nam",
+        )
+
+        errors, pending, _ = validate_records([row], [_source_row()])
+
+        self.assertTrue(
+            any("topic_manual must be blank for Not relevant" in e for e in errors)
+        )
+        self.assertEqual(pending, 0)
+
     def test_rejects_topic_outside_project_taxonomy(self):
         row = _review_row()
         row["topic_manual"] = "Topic invented"

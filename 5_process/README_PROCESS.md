@@ -104,7 +104,13 @@ CSV đầu ra chứa toàn văn bài báo có bản quyền; không commit hoặ
 
 ## Trạng thái dữ liệu nhãn
 
-`config/labeling_guideline.md` định nghĩa nhãn liên quan và các chủ đề A–L. Chạy `create_manual_label_sample.py` để tái tạo mẫu 57 dòng trực tiếp từ authoritative CSV: 56 dòng phân tầng theo `topic_primary` bằng thứ tự SHA-256 của `article_id` và một ví dụ ưu tiên `VNLAB-000002`. File `borderline_for_review.csv` không khớp authoritative dataset và không được dùng làm nguồn mẫu (`ISS-008`). Các trường gợi ý AI được để trống; chỉ người thật đọc và điền đủ `relevance_manual`, `topic_manual`, `review_reason`, `reviewer_id` và `review_date` mới được tính là đã review. Xem trạng thái và nguồn mẫu tại `reports/label_quality.md`.
+`config/labeling_guideline.md` định nghĩa nhãn liên quan và các chủ đề A–L. `create_manual_label_sample.py` có thể tái tạo mẫu 57 dòng trực tiếp từ authoritative CSV: 56 dòng phân tầng theo `topic_primary` bằng thứ tự SHA-256 của `article_id` và một ví dụ ưu tiên `VNLAB-000002`. File `borderline_for_review.csv` không khớp authoritative dataset và không được dùng làm nguồn mẫu (`ISS-008`). Chỉ người thật đọc và điền đủ `relevance_manual`, `topic_manual` (trừ Not relevant/Uncertain), `review_reason`, `reviewer_id` và `review_date` mới được tính là đã review. **Không chạy lại lệnh tạo mẫu lên file đã review nếu chưa sao lưu**, vì script tái tạo các trường thủ công ở trạng thái trống.
+
+File `data/processed/legacy_borderline_manual_labels.csv` lưu 56 quyết định thủ công đã hoàn tất cho pool riêng `3_du_lieu_phu/borderline_for_review.csv`; sidecar chỉ có ID và các trường nhãn/review, không chứa nội dung bài. Tất cả 16 trường nguồn của 56 dòng khớp pool này sau chuẩn hóa kiểu xuống dòng. Người review được xác nhận là Hà Mạnh Trí, ngày review 2026-10-27. Pool 304 dòng không thuộc authoritative CSV hiện hành, vì vậy các nhãn này không được ghép vào mẫu 57 dòng hoặc dùng để đánh giá dataset chính. Xem chi tiết tại `reports/label_quality.md`.
+
+Mẫu chính thức `data/processed/manual_label_sample.csv` hiện đã hoàn tất 57/57 dòng theo reviewer `RV004` ngày `2026-10-27`; kết quả đã qua validator strict. Báo cáo phân bố và giới hạn xem tại `reports/label_quality.md`.
+
+`reports/review_drafts/manual_label_ai_suggestions.csv` là bản nháp AI tham khảo, không phải nguồn nhãn chính thức; không nhập tự động vào các cột `*_manual`.
 
 Các CSV review chứa toàn văn bài báo nên được giữ cục bộ, không commit hoặc đưa lên repository công khai. `.gitignore` đã loại `manual_label_sample*.csv` khỏi Git.
 

@@ -21,9 +21,11 @@ Không mở các file CSV trung gian, biểu đồ hay manifest nếu chỉ cầ
 ## Trạng thái hiện tại
 
 - Dữ liệu chuẩn có 12.784 dòng và 16 cột; CSV là nguồn xử lý chính. Không ghi đè dữ liệu nguồn.
-- Các kiểm tra Process gần nhất: 45/45 test Process, 7/7 test gốc và integration validation PASS.
+- Các kiểm tra Process gần nhất: 47/47 test Process, 7/7 test gốc và integration validation PASS.
 - Phần slide của Người 6 chưa nằm trong đợt tích hợp này; có thể bắt đầu từ báo cáo chất lượng và thống kê đã kiểm tra.
-- Mẫu review có 57 dòng, nhưng **0/57 nhãn được người thật xác nhận**. Đây vẫn là phần cần hoàn tất; không dùng nhãn AI thay thế.
+- Mẫu review chính thức đã có **57/57 dòng được người review RV004 xác nhận** (ngày 2026-10-27); kết quả đã qua validator strict.
+- Bản gợi ý AI riêng tại `5_process/reports/review_drafts/manual_label_ai_suggestions.csv` chỉ là tài liệu tham khảo; không dùng thay nhãn thủ công.
+- Có 56 nhãn thủ công đã hoàn tất cho pool riêng `3_du_lieu_phu/borderline_for_review.csv`, lưu tại `5_process/data/processed/legacy_borderline_manual_labels.csv`; pool này không thuộc dataset chuẩn nên không ghép nhãn vào mẫu chính thức.
 - Có 65 ID thuộc các ứng viên/cụm giao split đã biết được đánh dấu `review_hold`; loại chúng khỏi modeling cho đến khi có quyết định phù hợp.
 - Process chưa huấn luyện mô hình. Xem báo cáo chất lượng và handoff trước khi bắt đầu Modeling.
 
@@ -40,4 +42,5 @@ Không mở các file CSV trung gian, biểu đồ hay manifest nếu chỉ cầ
 - CSV chuẩn và nội dung bài báo thuộc bản quyền các tòa soạn. Không đưa dữ liệu toàn văn lên nơi công khai.
 - `5_process/data/processed/articles_text_clean.csv` là đầu ra lớn chứa toàn văn; không mở nếu không cần và không commit.
 - `manual_label_sample.csv` chứa nội dung bài báo. Chỉ điền nhãn thủ công sau khi người review đọc và xác nhận; giữ các cột nguồn bất biến.
+- `legacy_borderline_manual_labels.csv` lưu nhãn cho pool review cũ, tách khỏi authoritative dataset.
 - `topic_primary` là nhãn tự động (weak label), không phải nhãn vàng. `sentiment` chưa được gán.

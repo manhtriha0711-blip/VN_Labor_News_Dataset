@@ -2,7 +2,7 @@
 
 **Cập nhật:** 2026-10-27
 **Người 1 — nghiệm thu kỹ thuật:** Hoàn thành.
-**Gói tích hợp kỹ thuật (Người 1–5):** Hoàn thành; nhãn Người 4 chờ người thật xác nhận. Slide Người 6 được để riêng để bàn giao.
+**Gói tích hợp kỹ thuật (Người 1–5):** Hoàn thành, gồm review nhãn thủ công 57/57 của Người 4. Slide Người 6 được để riêng để bàn giao.
 
 ## Người 1 — đầu vào, schema và tích hợp
 
@@ -18,21 +18,20 @@
 
 - [x] Người 2: module, audit list, logs và outputs chạy được; AI recommendations không được áp dụng như quyết định của người review; `ISS-006` đóng theo phạm vi audit.
 - [x] Người 3: module, tests, ví dụ và output đầy đủ; đầu ra kiểm tra trên 12.784 dòng.
-- [ ] Người 4: mẫu/guideline/validator sẵn sàng; còn 57/57 nhãn chờ người thật (`ISS-003`).
+- [x] Người 4: 57/57 nhãn được reviewer RV004 xác nhận ngày 2026-10-27; validator strict đạt (`ISS-003` resolved).
 - [x] Người 5: báo cáo/split/handoff được tái sinh; 65 ID liên quan các ứng viên cross-split đã biết được gắn `review_hold` (`ISS-007` mitigated).
 - [ ] Người 6: tự xây dựng slide và ghi chú từ các báo cáo/biểu đồ đã kiểm tra; phần này được để ngoài gói tích hợp để bàn giao riêng.
 
 ## Kiểm tra đã chạy
 
-- [x] `python -m unittest discover -s 5_process/tests -p "test_*.py" -v` — 45/45 đạt.
+- [x] `python -m unittest discover -s 5_process/tests -p "test_*.py" -v` — 47/47 đạt.
 - [x] `python -m unittest test_text_cleaning -v` — 7/7 đạt.
 - [x] Pipeline từ raw: profile → schema → metadata → text cleaning → thống kê/split.
 - [x] `python 5_process/src/validate_process_integration.py` — PASS; raw bất biến, 12.784 dòng/ID đối chiếu khớp.
 - [x] `python 5_process/src/create_manual_label_sample.py` — tạo lại 57 dòng từ raw: 56 phân tầng theo topic + 1 ví dụ ưu tiên.
-- [x] `python 5_process/src/validate_manual_labels.py` — source fields đối chiếu khớp; báo đúng 0 reviewed, 57 pending.
+- [x] `python 5_process/src/validate_manual_labels.py --require-complete` — 57 reviewed, 0 pending; source fields đối chiếu khớp.
 
 ## Điều kiện trước khi gọi toàn bộ Process là hoàn tất
 
-1. Người 4 hoàn tất review thủ công mẫu; không thể thay xác nhận người thật bằng nhãn AI.
-2. Người 6 hoàn tất slide và ghi chú thuyết trình theo phân công.
-3. Nếu muốn đưa các ID `review_hold` trở lại modeling, ghi quyết định review và chạy lại leakage audit.
+1. Người 6 hoàn tất slide và ghi chú thuyết trình theo phân công.
+2. Nếu muốn đưa các ID `review_hold` trở lại modeling, ghi quyết định review và chạy lại leakage audit.
